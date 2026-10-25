@@ -8,17 +8,28 @@ GeForce Ada cards run FP16 and BF16 tensor math with FP32 accumulation at half t
 
 The first hardware run (2026-10-25, log `RUN0001`) completed the transaction: preflight, display release, FWSEC, Booter and payload, both selector writes (`SS0 -> 0x88888888`, `SS1 7 -> 8`), the values held after FLR, cleanup, and Windows started by itself. The stock driver loaded normally with all 24,564 MiB.
 
-Register-resident tensor issue rate after the unlock (Triton `tl.dot` loop, 128x128x32 tiles, data held in registers, run inside a WSL2 container):
+Matched stock and unlocked runs on the same card, driver, 480 W limit, WSL2 container and scripts. The stock run was a normal boot after a full power-off; the unlocked run followed RUN0001. Each value is the median of 5 timed runs.
 
-| Inputs, accumulate | Measured | Stock ceiling |
-|---|---:|---:|
-| FP16, FP16 | 237.9 TFLOP/s | not limited |
-| FP16, FP32 | **263.9 TFLOP/s** | about 165 to 185 |
-| BF16, FP32 | **201.8 TFLOP/s** | about 165 to 185 |
+Register-resident tensor issue rate (Triton `tl.dot` loop, 128x128x32 tiles, operands held in registers):
 
-The stock ceiling is NVIDIA's 165.2 TFLOP/s dense FP32-accumulate figure for the RTX 4090 at 2.52 GHz, scaled to this card's real boost clock. A stock card cannot exceed it, so these rows show the unlock is active. FP32 accumulation now runs as fast as FP16 accumulation (ratio 1.11; about 0.5 on a stock card).
+| Inputs, accumulate | Stock | Unlocked | Change |
+|---|---:|---:|---:|
+| FP16, FP16 (control, not limited) | 226.8 | 237.9 | +5% |
+| FP16, FP32 | 127.4 | **263.9** | **+107%** |
+| BF16, FP32 | 139.3 | **201.8** | **+45%** |
+| FP32-acc / FP16-acc ratio | 0.56 | 1.11 | |
 
-Ordinary cuBLAS matrix multiplies gain much less, because they are also limited by memory and scheduling. After the unlock, an 8192x8192 PyTorch matmul measured BF16 143.4, FP16 141.1 and TF32 90.8 TFLOP/s. **No matched stock run exists yet for these**, so they are not a speedup claim. For reference, the upstream matched Linux run on an RTX 4090 found FP16 cuBLAS gains of 12 to 34% depending on shape, and BF16 essentially unchanged at 4096x4096. These are short benchmarks, not application speedups or a long-term stability test.
+TFLOP/s. FP16 with FP32 accumulation doubled and now runs as fast as FP16 accumulation.
+
+Ordinary matrix multiplies (PyTorch 2.5.1 / cuBLAS, 8192x8192, reduced-precision reductions off):
+
+| Type | Stock | Unlocked | Change |
+|---|---:|---:|---:|
+| BF16 | 137.6 | 143.4 | +4% |
+| FP16 | 135.3 | 141.1 | +4% |
+| TF32 | 69.0 | **90.8** | **+32%** |
+
+BF16 and FP16 GEMM gained about 4%, which is within the 5% difference the unlimited control showed between the two boots, so treat it as no clear gain. TF32 gained 32%, well beyond that. The upstream matched Linux run on an RTX 4090 found FP16 cuBLAS gains of 12 to 34% depending on shape. This is one stock and one unlocked boot with short runs, not an application speedup or a long-term stability test.
 
 ## Exact profile
 

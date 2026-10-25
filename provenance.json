@@ -14,7 +14,7 @@
     "capture": "CAP0001 (not published)"
   },
   "hardware_efi_sha256": "ff236e6b375fe3d965abb5b05332017d5029aea563cab0c0792b68b479052b63",
-  "hardware_scope": "one successful cold/manual launch (RUN0001, 2026-10-25) and one short register-resident tensor issue-rate check on this exact machine; no matched stock benchmark, not general or long-duration qualification",
+  "hardware_scope": "one successful cold/manual launch (RUN0001, 2026-10-25) and one matched stock/unlocked pair of short Triton issue-rate and PyTorch GEMM runs on this exact machine; not general or long-duration qualification",
   "counts": {
     "core": 90,
     "admission": 17,
