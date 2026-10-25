@@ -1,0 +1,47 @@
+{
+  "port": "RTX 4090 Suprim X / MSI Z790 GODLIKE",
+  "port_author": "PantACRO4life",
+  "version": "0.5.4",
+  "ada_commit": "491925c1079435e260137b9f3526066e764de830",
+  "windows_commit": "9352abd27480203ea146f766e7c96957912d148a",
+  "base": "Latence.app AD104 Windows reference (gpu-unlock-ada windows/ad104-msi)",
+  "target": {
+    "gpu": "10de:2684",
+    "subsystem": "1462:5102",
+    "chip": "0x192000a1",
+    "vbios": "95.02.3c.00.3c",
+    "board": "MSI MEG Z790 GODLIKE (MS-7D85) BIOS 1.H0",
+    "capture": "CAP0001 (not published)"
+  },
+  "hardware_efi_sha256": "ff236e6b375fe3d965abb5b05332017d5029aea563cab0c0792b68b479052b63",
+  "hardware_scope": "one successful cold/manual launch (RUN0001, 2026-10-25) and one short register-resident tensor issue-rate check on this exact machine; no matched stock benchmark, not general or long-duration qualification",
+  "counts": {
+    "core": 90,
+    "admission": 17,
+    "ownership_usb": 55,
+    "application": 15,
+    "io": 8
+  },
+  "total": 185,
+  "public_tree_validation": {
+    "validation": "fresh public-tree simulated tests with private inputs",
+    "total": 185,
+    "configured_public_efi_matches_hardware_efi": true,
+    "configured_efi_sha256": "ff236e6b375fe3d965abb5b05332017d5029aea563cab0c0792b68b479052b63",
+    "private_inputs_published": false,
+    "note": "The public tree rebuilds the EFI that ran on hardware byte-for-byte when supplied the excluded local ESP GUID. Building and tests never execute on the GPU."
+  },
+  "upstream_linux_target_admission_changed": false,
+  "automatic_boot_installation": false,
+  "base_record": {
+    "brand": "Latence.app",
+    "historical_hardware_efi_sha256": "b27709643f57284bf5d1e8941caa8f9b12725d7b32c5a9863e89ebafd456a37f",
+    "hardware_scope": "one successful cold/manual launch and three short Windows GEMM runs on the MSI RTX 4070 Ti / Z490 machine",
+    "total_scenarios": 177,
+    "publication_changes": [
+      "ESP GUID moved to ignored local configuration; synthetic GUID used only by host I/O tests",
+      "build tool paths configurable/discovered",
+      "public evidence excludes ROM, firmware, loaded driver code, Windows binary, local paths and raw handle addresses"
+    ]
+  }
+}
