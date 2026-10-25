@@ -8,32 +8,22 @@ GeForce Ada cards run FP16 and BF16 tensor math with FP32 accumulation at half t
 
 The first hardware run (2026-10-25, log `RUN0001`) completed the transaction: preflight, display release, FWSEC, Booter and payload, both selector writes (`SS0 -> 0x88888888`, `SS1 7 -> 8`), the values held after FLR, cleanup, and Windows started by itself. The stock driver loaded normally with all 24,564 MiB.
 
-Matched stock and unlocked runs on the same card, driver, 480 W limit, WSL2 container and scripts. The stock run was a normal boot after a full power-off; the unlocked run followed RUN0001. Each value is the median of 5 timed runs.
+Matched stock and unlocked runs on the same card, driver, 480 W limit, WSL2 container and script (sustained load: 20 s per mode, seeded inputs, median of the second half, power and clocks logged every 0.5 s, nothing else using the GPU). The stock values come from a normal boot after a full power-off (two runs), the unlocked values from two runs of an alternating 480/520 W test after RUN0002.
 
-Register-resident tensor issue rate (Triton `tl.dot` loop, 128x128x32 tiles, operands held in registers):
-
-| Inputs, accumulate | Stock | Unlocked | Change |
+| TFLOP/s, sustained | Stock | Unlocked | Change |
 |---|---:|---:|---:|
-| FP16, FP16 (control, not limited) | 226.8 | 237.9 | +5% |
-| FP16, FP32 | 127.4 | **263.9** | **+107%** |
-| BF16, FP32 | 139.3 | **201.8** | **+45%** |
-| FP32-acc / FP16-acc ratio | 0.56 | 1.11 | |
+| Triton `tl.dot`, FP16 in, FP32 accumulate | 173.4 | 249.7 | **+44%** |
+| Triton `tl.dot`, BF16 in, FP32 accumulate | 177.5 | 250.8 | **+41%** |
+| cuBLAS GEMM BF16, 8192x8192 | 168.6 | 177.6 | **+5%** |
+| cuBLAS GEMM TF32, 8192x8192 | 89.7 | 113.2 | **+26%** |
 
-TFLOP/s. FP16 with FP32 accumulation doubled and now runs as fast as FP16 accumulation.
+The Triton rows are register-resident tensor issue rates (128x128x32 tiles, operands held in registers). The GEMM rows use PyTorch 2.5.1 with reduced-precision reductions off. Unlocked, the card spent 55 to 65% of load time at the power limit (stock 19 to 45%), so at 480 W the tensor cores run out of power before reaching 2x. Raising the limit to the BIOS maximum of 520 W added about 1% to BF16 GEMM and 4% to TF32.
 
-Ordinary matrix multiplies (PyTorch 2.5.1 / cuBLAS, 8192x8192, reduced-precision reductions off):
-
-| Type | Stock | Unlocked | Change |
-|---|---:|---:|---:|
-| BF16 | 137.6 | 143.4 | +4% |
-| FP16 | 135.3 | 141.1 | +4% |
-| TF32 | 69.0 | **90.8** | **+32%** |
-
-BF16 and FP16 GEMM gained about 4%, which is within the 5% difference the unlimited control showed between the two boots, so treat it as no clear gain. TF32 gained 32%, well beyond that. The upstream matched Linux run on an RTX 4090 found FP16 cuBLAS gains of 12 to 34% depending on shape. This is one stock and one unlocked boot with short runs, not an application speedup or a long-term stability test.
+Runs can vary. One earlier unlocked run sustained about 320 TFLOP/s on both Triton rows (and 217 / 141 on the GEMM rows), and one 520 W run reached 303 on FP16; neither repeated, so the table uses the consistent runs. In one stock run, BF16 Triton dropped from 169 to 128 mid-run; the stock BF16 value is from the clean run. Earlier sub-second tests understated both states because clocks were still ramping from idle. This is one card, short runs, not an application speedup or a long-term stability test.
 
 ## Exact profile
 
-Tested once, on one machine:
+Tested on one machine (two successful runs, RUN0001 and RUN0002):
 
 - GPU: MSI RTX 4090 Suprim X, `10de:2684`, subsystem `1462:5102`, rev A1, VBIOS 95.02.3c.00.3c, 24,564 MiB, 480 W limit
 - Board: MSI MEG Z790 GODLIKE (MS-7D85), BIOS 1.H0, Intel i9-13900K
@@ -109,7 +99,7 @@ The unlock lasts until the next full power-off. There is no automatic retry, no 
 
 ## Risk
 
-This is experimental and was validated on hardware exactly once. Every check runs before the first change to the GPU, and any mismatch refuses with nothing touched. After a failure past that point, the app keeps firmware-visible memory reserved, halts and asks for a full power-off. Nothing is written to the VBIOS, and full power-offs have returned the card to stock. No permanent damage has been reported for this unlock, but you run it at your own risk.
+This is experimental and was validated on one machine only (two successful runs). Every check runs before the first change to the GPU, and any mismatch refuses with nothing touched. After a failure past that point, the app keeps firmware-visible memory reserved, halts and asks for a full power-off. Nothing is written to the VBIOS, and full power-offs have returned the card to stock. No permanent damage has been reported for this unlock, but you run it at your own risk.
 
 ## Credits and licence
 
